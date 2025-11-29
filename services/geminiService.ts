@@ -76,7 +76,6 @@ export async function decodeAudioData(
 
 export const generateDuaAudio = async (text: string): Promise<Uint8Array | null> => {
   try {
-    // Reintroducing "proper Tajweed" and "slow, melodious, and spiritual voice"
     const prompt = `Read this Arabic prayer with proper Tajweed, in a slow, melodious, and spiritual voice: ${text}`;
     
     // Implement a timeout for the AI call (30 seconds)
@@ -91,8 +90,8 @@ export const generateDuaAudio = async (text: string): Promise<Uint8Array | null>
         responseModalities: [Modality.AUDIO], 
         speechConfig: {
             voiceConfig: {
-              // 'Kore' tends to have a deeper, calmer tone suitable for recitation
-              prebuiltVoiceConfig: { voiceName: 'Kore' },
+              // Changed voice to 'Studio' for a male recitation, aligning with user's request.
+              prebuiltVoiceConfig: { voiceName: 'Studio' },
             },
         },
       },
