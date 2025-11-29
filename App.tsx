@@ -164,7 +164,7 @@ const App: React.FC = () => {
             className="flex items-center gap-2 text-slate-600 pointer-events-auto cursor-pointer hover:opacity-80 transition-opacity"
           >
             <Moon className="w-6 h-6" />
-            <span className="font-serif-display font-semibold text-xl tracking-wide">DuaAI</span>
+            <span className="font-serif-display font-semibold text-xl tracking-wide">My Dua Companion</span>
           </div>
         </header>
 
