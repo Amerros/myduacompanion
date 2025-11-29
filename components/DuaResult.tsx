@@ -2,15 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import { DuaResponse } from '../types';
 import { ArrowLeft, Copy, Share2, Feather, Play, Pause, Lock, Loader2, Volume2 } from 'lucide-react';
 import { generateDuaAudio, decodeAudioData } from '../services/geminiService';
+import { User } from '@supabase/supabase-js'; // Import User type
 
 interface DuaResultProps {
   dua: DuaResponse;
   onBack: () => void;
   isPremium: boolean;
   onUpgrade: () => void;
+  setShowAuthModal: (show: boolean) => void; // New prop
+  user: User | null; // New prop
 }
 
-const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade }) => {
+const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade, setShowAuthModal, user }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -29,8 +32,13 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
   }, []);
 
   const handlePlayAudio = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      alert("Please log in or sign up to listen to audio recitations.");
+      return;
+    }
     if (!isPremium) {
-      onUpgrade();
+      onUpgrade(); // This will navigate to the premium page
       return;
     }
 

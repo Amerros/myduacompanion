@@ -1,27 +1,34 @@
 import React from 'react';
 import { Check, Star, Lock, Zap, Music, CreditCard } from 'lucide-react';
-import { setPremiumStatus } from '../services/userService'; // Corrected import
+import { setPremiumStatus } from '../services/userService';
+import { User } from '@supabase/supabase-js'; // Import User type
 
 interface PremiumPageProps {
   onUpgrade: () => void;
+  user: User | null; // Pass user object
+  setShowAuthModal: (show: boolean) => void; // Pass function to show auth modal
 }
 
-const PremiumPage: React.FC<PremiumPageProps> = ({ onUpgrade }) => {
+const PremiumPage: React.FC<PremiumPageProps> = ({ onUpgrade, user, setShowAuthModal }) => {
   const handleSubscribe = (amount: number, planType: string) => {
+    if (!user) {
+      setShowAuthModal(true);
+      alert("Please log in or sign up to subscribe to Premium.");
+      return;
+    }
+
     // Open PayPal in new tab
     window.open(`https://paypal.me/drowsymasks/${amount}`, '_blank');
     
     // Simulate web-hook verification for demo purposes
-    // In a real app, this would listen for a success URL or server-side event
-    setTimeout(() => {
+    setTimeout(async () => {
       if (confirm(`Did you complete the ${planType} payment on PayPal? Click OK to activate your Premium status.`)) {
-        // This needs to be updated to use the user ID from the session
-        // For now, it's a placeholder as the user ID isn't directly available here
-        // A more robust solution would involve a server-side webhook from PayPal
-        // or passing the user ID from App.tsx
-        console.warn("Premium status update in PremiumPage.tsx needs user ID. Simulating for now.");
-        // setPremiumStatus(userId, true); // This would be the correct call
-        onUpgrade(); // Call onUpgrade to update App.tsx state
+        if (user) { // Ensure user is still logged in after potential modal interaction
+          await setPremiumStatus(user.id, true);
+          onUpgrade(); // Call onUpgrade to update App.tsx state
+        } else {
+          alert("Subscription could not be activated. Please log in and try again.");
+        }
       }
     }, 2000);
   };

@@ -1,31 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Moon, Wind, Stars, Lock, Loader2 } from 'lucide-react';
+import { Sparkles, Moon, Wind, Stars, Lock, Loader2, X } from 'lucide-react';
 import DuaInput from './components/DuaInput';
 import DuaResult from './components/DuaResult';
 import Navigation from './components/Navigation';
 import PremiumPage from './components/PremiumPage';
 import Dashboard from './components/Dashboard';
-import Login from './src/pages/Login'; // Corrected import path
-import { useSession } from './src/contexts/SessionContext'; // Corrected import path
+import Login from './src/pages/Login'; // Import the Login page
+import { useSession } from './src/contexts/SessionContext'; // Import useSession hook
 
 import { DuaResponse, ViewState } from './types';
 import { generateDua } from './services/geminiService';
 import { 
   getDailyUsage, 
   incrementDailyUsage, 
-  getPremiumStatus, // Updated import
-  setPremiumStatus, // New import
+  getPremiumStatus, 
+  setPremiumStatus, 
   getSavedDuas, 
   saveDuaToHistory, 
   FREE_DAILY_LIMIT 
 } from './services/userService';
 
 const App: React.FC = () => {
-  const { session, user, isLoading: isSessionLoading } = useSession(); // Use the session context and user
+  const { session, user, isLoading: isSessionLoading } = useSession();
   const [dua, setDua] = useState<DuaResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<ViewState>('HOME');
   const [resultMode, setResultMode] = useState(false); // Sub-state for HOME view
+  const [showAuthModal, setShowAuthModal] = useState(false); // New state for auth modal
   
   // User State
   const [dailyCount, setDailyCount] = useState(0);
@@ -48,12 +49,11 @@ const App: React.FC = () => {
       }
     };
     initializeUserData();
-  }, [user, view]); // Refresh when user or view changes
+  }, [user, view]);
 
   const handleRequest = async (query: string) => {
     if (!user) {
-      alert("Please log in to generate Duas.");
-      setView('HOME'); // Or redirect to login
+      setShowAuthModal(true);
       return;
     }
 
@@ -65,7 +65,6 @@ const App: React.FC = () => {
     }
 
     setLoading(true);
-    // Subtle delay to allow the "connecting" animation to breathe
     const [result] = await Promise.all([
       generateDua(query),
       new Promise(resolve => setTimeout(resolve, 1500)) 
@@ -75,15 +74,13 @@ const App: React.FC = () => {
       setDua(result);
       setResultMode(true);
       
-      // Update usage and history
       if (!isPremium) {
         incrementDailyUsage();
         setDailyCount(prev => prev + 1);
       }
       
-      // Auto-save if premium (or simple save for now to history)
       await saveDuaToHistory(result, user.id);
-      setSavedDuas(await getSavedDuas(user.id)); // Re-fetch saved duas
+      setSavedDuas(await getSavedDuas(user.id));
     }
     setLoading(false);
   };
@@ -93,7 +90,6 @@ const App: React.FC = () => {
     setResultMode(false);
   };
 
-  // If navigating away from HOME, reset the result mode so user sees input when they return
   const handleNavChange = (newView: ViewState) => {
     setView(newView);
     if (newView !== 'HOME') {
@@ -106,6 +102,7 @@ const App: React.FC = () => {
       await setPremiumStatus(user.id, true);
       setIsPremium(true);
       setView('HOME');
+      setShowAuthModal(false); // Close modal if open
     }
   };
 
@@ -117,14 +114,10 @@ const App: React.FC = () => {
     );
   }
 
-  if (!session) {
-    return <Login />;
-  }
-
   const renderContent = () => {
     switch (view) {
       case 'PREMIUM':
-        return <PremiumPage onUpgrade={handleUpgradeSuccess} />;
+        return <PremiumPage onUpgrade={handleUpgradeSuccess} user={user} setShowAuthModal={setShowAuthModal} />;
       case 'DASHBOARD':
         return (
           <Dashboard 
@@ -151,6 +144,8 @@ const App: React.FC = () => {
             onBack={handleReset} 
             isPremium={isPremium}
             onUpgrade={() => setView('PREMIUM')}
+            setShowAuthModal={setShowAuthModal} // Pass to DuaResult
+            user={user} // Pass to DuaResult
           />
         ) : (
           <div className="flex flex-col items-center w-full">
@@ -184,14 +179,9 @@ const App: React.FC = () => {
       
       {/* Heavenly Background Elements */}
       <div className="absolute inset-0 z-0 pointer-events-none fixed">
-        {/* Dynamic Gradient Sky */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky-100 via-indigo-50 to-amber-50 opacity-80"></div>
-        
-        {/* Glowing Orbs */}
         <div className="absolute top-[-10%] left-[20%] w-96 h-96 bg-amber-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse duration-[5000ms]"></div>
         <div className="absolute bottom-[-10%] right-[10%] w-[500px] h-[500px] bg-violet-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse duration-[7000ms]"></div>
-        
-        {/* Subtle noise texture */}
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}></div>
       </div>
 
@@ -217,6 +207,20 @@ const App: React.FC = () => {
         {/* Navigation Bar */}
         <Navigation currentView={view} setView={handleNavChange} isPremium={isPremium} />
         
+        {/* Auth Modal */}
+        {showAuthModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-in fade-in">
+            <div className="relative w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
+              <button 
+                onClick={() => setShowAuthModal(false)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+              >
+                <X size={24} />
+              </button>
+              <Login />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
