@@ -19,6 +19,7 @@ interface DuaResultProps {
 const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade, setShowAuthModal, user, dailyAudioCount, setDailyAudioCount }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const [progress, setProgress] = useState(0); // New state for progress bar
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
 
@@ -36,6 +37,25 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
       }
     };
   }, []);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLoadingAudio) {
+      setProgress(0);
+      interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev < 95) { // Stop just before 100 to indicate it's still processing
+            return prev + 5; // Increment every 1.25 seconds for a 25-second total fill
+          }
+          return prev;
+        });
+      }, 1250); // 25 seconds / 20 increments = 1.25 seconds per increment
+    } else {
+      clearInterval(interval!);
+      setProgress(0); // Reset progress when not loading
+    }
+    return () => clearInterval(interval);
+  }, [isLoadingAudio]);
 
   const handlePlayAudio = async () => {
     // Check free audio limit for unauthenticated users
@@ -154,7 +174,7 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
                {isLoadingAudio ? (
                  <>
                    <Loader2 className="w-4 h-4 animate-spin" />
-                   <span>Generating...</span> {/* More descriptive loading */}
+                   <span>Generating...</span>
                  </>
                ) : (!user && dailyAudioCount >= FREE_AUDIO_LIMIT) || (user && !isPremium) ? (
                  <>
@@ -173,6 +193,14 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
                  </>
                )}
              </button>
+             {isLoadingAudio && (
+               <div className="absolute -bottom-6 left-0 right-0 h-1 bg-slate-200 rounded-full overflow-hidden">
+                 <div 
+                   className="h-full bg-emerald-500 transition-all duration-1000 ease-linear" 
+                   style={{ width: `${progress}%` }}
+                 ></div>
+               </div>
+             )}
           </div>
 
           {/* Arabic */}
