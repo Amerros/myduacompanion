@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, Star, Lock, Zap, Music, CreditCard } from 'lucide-react';
 import { setPremiumStatus } from '../services/userService';
 import { User } from '@supabase/supabase-js'; // Import User type
+import { loadStripe } from '@stripe/stripe-js'; // Import loadStripe
 
 interface PremiumPageProps {
   onUpgrade: () => void;
@@ -9,29 +10,42 @@ interface PremiumPageProps {
   setShowAuthModal: (show: boolean) => void; // Pass function to show auth modal
 }
 
+// Make sure to call loadStripe outside of a component’s render to avoid recreating the Stripe object on every render.
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string);
+
 const PremiumPage: React.FC<PremiumPageProps> = ({ onUpgrade, user, setShowAuthModal }) => {
-  const handleSubscribe = (amount: number, planType: string) => {
+  const handleSubscribe = async (priceId: string, planType: string) => { // priceId will be Stripe Price ID
     if (!user) {
       setShowAuthModal(true);
       alert("Please log in or sign up to subscribe to Premium.");
       return;
     }
 
-    // Open PayPal in new tab
-    window.open(`https://paypal.me/drowsymasks/${amount}`, '_blank');
-    
-    // Simulate web-hook verification for demo purposes
-    // Increased timeout to give user more time to interact with PayPal.me
-    setTimeout(async () => {
-      if (confirm(`Did you complete the ${planType} payment on PayPal? Click OK to activate your Premium status.`)) {
-        if (user) { // Ensure user is still logged in after potential modal interaction
-          await setPremiumStatus(user.id, true);
-          onUpgrade(); // Call onUpgrade to update App.tsx state
-        } else {
-          alert("Subscription could not be activated. Please log in and try again.");
-        }
+    try {
+      // Call your Supabase Edge Function
+      const response = await fetch('https://fsakzdnnsnafovdmxybx.supabase.co/functions/v1/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await user.getIdToken()}`, // Pass user's JWT for authentication
+        },
+        body: JSON.stringify({ priceId }),
+      });
+
+      const { url, error } = await response.json();
+
+      if (error) {
+        alert(`Error initiating checkout: ${error}`);
+        return;
       }
-    }, 15000); // Increased to 15 seconds
+
+      if (url) {
+        window.location.href = url; // Redirect to Stripe Checkout
+      }
+    } catch (error) {
+      console.error("Error during Stripe checkout initiation:", error);
+      alert("Failed to initiate payment. Please try again.");
+    }
   };
 
   return (
@@ -117,14 +131,14 @@ const PremiumPage: React.FC<PremiumPageProps> = ({ onUpgrade, user, setShowAuthM
 
             <div className="flex flex-col gap-3">
               <button 
-                onClick={() => handleSubscribe(5, 'monthly')}
-                className="w-full py-4 bg-[#0070BA] text-white font-bold rounded-xl hover:bg-[#005ea6] transition-all flex items-center justify-center gap-2 group"
+                onClick={() => handleSubscribe('price_12345', 'monthly')} // Replace 'price_12345' with your Stripe Price ID
+                className="w-full py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 group"
               >
-                <span>Pay $5 with PayPal</span>
+                <span>Subscribe with Stripe</span>
                 <CreditCard size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
               <button 
-                 onClick={() => handleSubscribe(50, 'yearly')}
+                 onClick={() => handleSubscribe('price_67890', 'yearly')} // Replace 'price_67890' with your Stripe Price ID
                  className="w-full py-3 bg-white/10 text-white font-medium rounded-xl hover:bg-white/20 transition-all text-sm"
               >
                 Pay $50 Yearly (Save 16%)
@@ -134,7 +148,7 @@ const PremiumPage: React.FC<PremiumPageProps> = ({ onUpgrade, user, setShowAuthM
       </div>
       
       <div className="mt-12 text-center text-slate-500 text-sm">
-        <p>Processed securely by PayPal. Cancel anytime.</p>
+        <p>Processed securely by Stripe. Cancel anytime.</p>
       </div>
     </div>
   );
