@@ -21,6 +21,7 @@ const PremiumPage: React.FC<PremiumPageProps> = ({ onUpgrade, user, setShowAuthM
     window.open(`https://paypal.me/drowsymasks/${amount}`, '_blank');
     
     // Simulate web-hook verification for demo purposes
+    // Increased timeout to give user more time to interact with PayPal.me
     setTimeout(async () => {
       if (confirm(`Did you complete the ${planType} payment on PayPal? Click OK to activate your Premium status.`)) {
         if (user) { // Ensure user is still logged in after potential modal interaction
@@ -30,7 +31,7 @@ const PremiumPage: React.FC<PremiumPageProps> = ({ onUpgrade, user, setShowAuthM
           alert("Subscription could not be activated. Please log in and try again.");
         }
       }
-    }, 2000);
+    }, 15000); // Increased to 15 seconds
   };
 
   return (
