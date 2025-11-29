@@ -5,6 +5,8 @@ import DuaResult from './components/DuaResult';
 import Navigation from './components/Navigation';
 import PremiumPage from './components/PremiumPage';
 import Dashboard from './components/Dashboard';
+import Login from './pages/Login'; // Import the Login page
+import { useSession } from './contexts/SessionContext'; // Import useSession hook
 
 import { DuaResponse, ViewState } from './types';
 import { generateDua } from './services/geminiService';
@@ -18,6 +20,7 @@ import {
 } from './services/userService';
 
 const App: React.FC = () => {
+  const { session, isLoading: isSessionLoading } = useSession(); // Use the session context
   const [dua, setDua] = useState<DuaResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<ViewState>('HOME');
@@ -30,10 +33,11 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Initialize user state on mount
-    setDailyCount(getDailyUsage());
-    setIsPremium(isPremiumUser());
+    // This will be updated to fetch from Supabase in the next step
+    setDailyCount(getDailyUsage()); 
+    setIsPremium(isPremiumUser()); 
     setSavedDuas(getSavedDuas());
-  }, [view]); // Refresh when view changes (e.g. returning from premium upgrade)
+  }, [view, session]); // Refresh when view or session changes
 
   const handleRequest = async (query: string) => {
     // Rate Limit Check
@@ -79,6 +83,18 @@ const App: React.FC = () => {
       setResultMode(false);
     }
   };
+
+  if (isSessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Login />;
+  }
 
   const renderContent = () => {
     switch (view) {
