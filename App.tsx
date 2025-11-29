@@ -189,7 +189,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden bg-slate-50 text-slate-800 font-sans selection:bg-amber-100 selection:text-amber-900 transition-colors duration-1000">
+    <div className="min-h-screen relative overflow-x-hidden bg-white text-slate-800 font-sans selection:bg-amber-100 selection:text-amber-900 transition-colors duration-1000">
       
       {/* Heavenly Background Elements */}
       <div className="absolute inset-0 z-0 pointer-events-none fixed">
