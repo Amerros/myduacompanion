@@ -56,6 +56,13 @@ const App: React.FC = () => {
     initializeUserData();
   }, [user, view]);
 
+  // Effect to close the auth modal when the user logs in
+  useEffect(() => {
+    if (user && showAuthModal) {
+      setShowAuthModal(false);
+    }
+  }, [user, showAuthModal]);
+
   const handleRequest = async (query: string) => {
     // Check free limit for unauthenticated users
     if (!user && dailyCount >= FREE_DAILY_LIMIT) {
