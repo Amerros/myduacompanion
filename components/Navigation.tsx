@@ -1,6 +1,6 @@
 import React from 'react';
 import { ViewState } from '../types';
-import { Moon, Heart, Star, ShoppingBag, LayoutDashboard } from 'lucide-react';
+import { Moon, Heart, Star, LayoutDashboard } from 'lucide-react';
 
 interface NavigationProps {
   currentView: ViewState;
@@ -14,7 +14,6 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView, isPremium
     { view: 'DASHBOARD', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { view: 'PREMIUM', label: 'Premium', icon: <Star size={18} className={isPremium ? "fill-amber-400 text-amber-400" : ""} /> },
     { view: 'DONATE', label: 'Donate', icon: <Heart size={18} /> },
-    { view: 'RESOURCES', label: 'Shop', icon: <ShoppingBag size={18} /> },
   ];
 
   return (

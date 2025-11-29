@@ -13,17 +13,7 @@ export interface MoodPreset {
   query: string;
 }
 
-export interface AffiliateProduct {
-  id: string;
-  title: string;
-  description: string;
-  price: string;
-  category: 'Books' | 'Prayer' | 'Learning' | 'Lifestyle';
-  image: string;
-  link: string;
-}
-
-export type ViewState = 'HOME' | 'PREMIUM' | 'DONATE' | 'RESOURCES' | 'DASHBOARD';
+export type ViewState = 'HOME' | 'PREMIUM' | 'DONATE' | 'DASHBOARD';
 
 export interface Verse {
   id: string;
