@@ -100,9 +100,13 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
       } else {
         alert("Unable to generate audio at this time. Please try again.");
       }
-    } catch (error) {
+    } catch (error: any) { // Catch specific timeout error
       console.error("Playback failed:", error);
-      alert("Error playing audio.");
+      if (error.message && error.message.includes('timed out')) {
+        alert("Audio generation took too long. Please try again in a moment.");
+      } else {
+        alert("Error playing audio. Please try again.");
+      }
     } finally {
       setIsLoadingAudio(false);
     }
@@ -148,7 +152,10 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
                title={((user && isPremium) || (!user && dailyAudioCount < FREE_AUDIO_LIMIT)) ? "Play Recitation" : "Upgrade to Listen"}
              >
                {isLoadingAudio ? (
-                 <Loader2 className="w-4 h-4 animate-spin" />
+                 <>
+                   <Loader2 className="w-4 h-4 animate-spin" />
+                   <span>Generating...</span> {/* More descriptive loading */}
+                 </>
                ) : (!user && dailyAudioCount >= FREE_AUDIO_LIMIT) || (user && !isPremium) ? (
                  <>
                    <Lock className="w-3 h-3" />

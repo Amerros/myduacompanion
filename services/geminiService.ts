@@ -79,7 +79,12 @@ export const generateDuaAudio = async (text: string): Promise<Uint8Array | null>
     // Specifically prompt for a recitation style
     const prompt = `Read this Arabic prayer with proper Tajweed, in a slow, melodious, and spiritual voice: ${text}`;
     
-    const response = await ai.models.generateContent({
+    // Implement a timeout for the AI call (30 seconds)
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Audio generation timed out after 30 seconds.')), 30000)
+    );
+
+    const responsePromise = ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
       contents: [{ parts: [{ text: prompt }] }],
       config: {
@@ -92,13 +97,22 @@ export const generateDuaAudio = async (text: string): Promise<Uint8Array | null>
         },
       },
     });
-    
+
+    const response = await Promise.race([responsePromise, timeoutPromise]);
+
     const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (!base64Audio) return null;
+    if (!base64Audio) {
+      console.error("Audio Generation Error: No base64 audio data received.");
+      return null;
+    }
     
     return decode(base64Audio);
   } catch (error) {
     console.error("Audio Generation Error:", error);
+    // Provide a more specific error message if it's a timeout
+    if (error instanceof Error && error.message.includes('timed out')) {
+      throw error; // Re-throw to be caught by DuaResult for specific alert
+    }
     return null;
   }
 };
