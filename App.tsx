@@ -4,8 +4,7 @@ import DuaInput from './components/DuaInput';
 import DuaResult from './components/DuaResult';
 import Navigation from './components/Navigation';
 import PremiumPage from './components/PremiumPage';
-import DonationPage from './components/DonationPage';
-import Dashboard from './components/Dashboard'; // Added import for Dashboard
+import Dashboard from './components/Dashboard';
 
 import { DuaResponse, ViewState } from './types';
 import { generateDua } from './services/geminiService';
@@ -85,8 +84,6 @@ const App: React.FC = () => {
     switch (view) {
       case 'PREMIUM':
         return <PremiumPage onUpgrade={() => { setIsPremium(true); setView('HOME'); }} />;
-      case 'DONATE':
-        return <DonationPage />;
       case 'DASHBOARD':
         return (
           <Dashboard 

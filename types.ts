@@ -13,7 +13,7 @@ export interface MoodPreset {
   query: string;
 }
 
-export type ViewState = 'HOME' | 'PREMIUM' | 'DONATE' | 'DASHBOARD';
+export type ViewState = 'HOME' | 'PREMIUM' | 'DASHBOARD';
 
 export interface Verse {
   id: string;

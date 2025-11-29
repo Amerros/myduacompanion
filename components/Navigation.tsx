@@ -13,7 +13,6 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView, isPremium
     { view: 'HOME', label: 'Home', icon: <Moon size={18} /> },
     { view: 'DASHBOARD', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { view: 'PREMIUM', label: 'Premium', icon: <Star size={18} className={isPremium ? "fill-amber-400 text-amber-400" : ""} /> },
-    { view: 'DONATE', label: 'Donate', icon: <Heart size={18} /> },
   ];
 
   return (
