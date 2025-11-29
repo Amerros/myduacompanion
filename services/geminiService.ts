@@ -77,7 +77,8 @@ export async function decodeAudioData(
 export const generateDuaAudio = async (text: string): Promise<Uint8Array | null> => {
   try {
     // Specifically prompt for a recitation style
-    const prompt = `Read this Arabic prayer with proper Tajweed, in a slow, melodious, and spiritual voice: ${text}`;
+    // Changed from "slow, melodious, and spiritual voice" to "clear and natural voice" for faster generation
+    const prompt = `Recite this Arabic prayer with proper Tajweed, in a clear and natural voice: ${text}`;
     
     // Implement a timeout for the AI call (30 seconds)
     const timeoutPromise = new Promise<never>((_, reject) =>
