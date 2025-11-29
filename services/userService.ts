@@ -2,9 +2,10 @@ import { DuaResponse } from "../types";
 import { supabase } from '../src/integrations/supabase/client'; // Corrected import path
 
 const KEY_USAGE = 'dua_ai_usage';
-// KEY_PREMIUM and KEY_SAVED are no longer needed for localStorage
+const KEY_AUDIO_USAGE = 'dua_ai_audio_usage'; // New key for audio usage
 
 export const FREE_DAILY_LIMIT = 3;
+export const FREE_AUDIO_LIMIT = 1; // New limit for free audio plays
 
 export const getDailyUsage = (): number => {
   const stored = localStorage.getItem(KEY_USAGE);
@@ -23,6 +24,25 @@ export const incrementDailyUsage = () => {
   const current = getDailyUsage();
   const today = new Date().toDateString();
   localStorage.setItem(KEY_USAGE, JSON.stringify({ date: today, count: current + 1 }));
+};
+
+export const getDailyAudioUsage = (): number => {
+  const stored = localStorage.getItem(KEY_AUDIO_USAGE);
+  const today = new Date().toDateString();
+  
+  if (stored) {
+    const parsed = JSON.parse(stored);
+    if (parsed.date === today) {
+      return parsed.count;
+    }
+  }
+  return 0;
+};
+
+export const incrementDailyAudioUsage = () => {
+  const current = getDailyAudioUsage();
+  const today = new Date().toDateString();
+  localStorage.setItem(KEY_AUDIO_USAGE, JSON.stringify({ date: today, count: current + 1 }));
 };
 
 export const getPremiumStatus = async (userId: string): Promise<boolean> => {

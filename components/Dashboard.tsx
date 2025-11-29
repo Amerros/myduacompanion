@@ -2,6 +2,7 @@ import React from 'react';
 import { DuaResponse } from '../types';
 import { Clock, Star, Zap, User } from 'lucide-react';
 import { FREE_DAILY_LIMIT } from '../services/userService';
+import { User as SupabaseUser } from '@supabase/supabase-js'; // Import Supabase User type
 
 interface DashboardProps {
   dailyUsage: number;
@@ -9,11 +10,29 @@ interface DashboardProps {
   savedDuas: DuaResponse[];
   onUpgrade: () => void;
   onViewDua: (dua: DuaResponse) => void;
+  user: SupabaseUser | null; // New prop for user
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ dailyUsage, isPremium, savedDuas, onUpgrade, onViewDua }) => {
+const Dashboard: React.FC<DashboardProps> = ({ dailyUsage, isPremium, savedDuas, onUpgrade, onViewDua, user }) => {
   const usagePercentage = Math.min((dailyUsage / FREE_DAILY_LIMIT) * 100, 100);
   
+  if (!user) {
+    return (
+      <div className="w-full max-w-md mx-auto text-center py-20 animate-in fade-in">
+        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl">
+          <User size={48} className="text-slate-400 mx-auto mb-6" />
+          <h2 className="font-serif-display text-2xl text-slate-800 mb-4">
+            Log In to Access Your Dashboard
+          </h2>
+          <p className="text-slate-500 mb-6">
+            Your spiritual journey, saved prayers, and premium status will appear here once you're logged in.
+          </p>
+          {/* You might want to add a button here to trigger the login modal */}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-4xl mx-auto animate-in slide-in-from-bottom-8 duration-700 pb-24">
        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">

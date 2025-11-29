@@ -13,11 +13,14 @@ import { generateDua } from './services/geminiService';
 import { 
   getDailyUsage, 
   incrementDailyUsage, 
+  getDailyAudioUsage, // New import
+  incrementDailyAudioUsage, // New import
   getPremiumStatus, 
   setPremiumStatus, 
   getSavedDuas, 
   saveDuaToHistory, 
-  FREE_DAILY_LIMIT 
+  FREE_DAILY_LIMIT,
+  FREE_AUDIO_LIMIT // New import
 } from './services/userService';
 
 const App: React.FC = () => {
@@ -30,20 +33,22 @@ const App: React.FC = () => {
   
   // User State
   const [dailyCount, setDailyCount] = useState(0);
+  const [dailyAudioCount, setDailyAudioCount] = useState(0); // New state for audio usage
   const [isPremium, setIsPremium] = useState(false);
   const [savedDuas, setSavedDuas] = useState<DuaResponse[]>([]);
 
   useEffect(() => {
     const initializeUserData = async () => {
+      setDailyCount(getDailyUsage()); 
+      setDailyAudioCount(getDailyAudioUsage()); // Initialize audio count
+
       if (user) {
-        setDailyCount(getDailyUsage()); 
         const premium = await getPremiumStatus(user.id);
         setIsPremium(premium);
         const saved = await getSavedDuas(user.id);
         setSavedDuas(saved);
       } else {
-        // Reset state if no user is logged in
-        setDailyCount(0);
+        // Reset Supabase-dependent state if no user is logged in
         setIsPremium(false);
         setSavedDuas([]);
       }
@@ -52,14 +57,16 @@ const App: React.FC = () => {
   }, [user, view]);
 
   const handleRequest = async (query: string) => {
-    if (!user) {
+    // Check free limit for unauthenticated users
+    if (!user && dailyCount >= FREE_DAILY_LIMIT) {
       setShowAuthModal(true);
+      alert("You have reached your free daily limit for Duas. Please log in or upgrade for unlimited Duas.");
       return;
     }
 
-    // Rate Limit Check
-    if (!isPremium && dailyCount >= FREE_DAILY_LIMIT) {
-      alert("You have reached your free daily limit. Please upgrade for unlimited Duas.");
+    // Check premium status for authenticated users
+    if (user && !isPremium && dailyCount >= FREE_DAILY_LIMIT) {
+      alert("You have reached your free daily limit for Duas. Please upgrade for unlimited Duas.");
       setView('PREMIUM');
       return;
     }
@@ -74,13 +81,17 @@ const App: React.FC = () => {
       setDua(result);
       setResultMode(true);
       
+      // Increment usage for free users or non-premium authenticated users
       if (!isPremium) {
         incrementDailyUsage();
         setDailyCount(prev => prev + 1);
       }
       
-      await saveDuaToHistory(result, user.id);
-      setSavedDuas(await getSavedDuas(user.id));
+      // Save Dua to history ONLY if user is logged in (saving is a premium feature)
+      if (user) {
+        await saveDuaToHistory(result, user.id);
+        setSavedDuas(await getSavedDuas(user.id));
+      }
     }
     setLoading(false);
   };
@@ -126,6 +137,7 @@ const App: React.FC = () => {
             savedDuas={savedDuas}
             onUpgrade={() => setView('PREMIUM')}
             onViewDua={(d) => { setDua(d); setResultMode(true); setView('HOME'); }}
+            user={user} // Pass user to Dashboard
           />
         );
       case 'HOME':
@@ -146,13 +158,15 @@ const App: React.FC = () => {
             onUpgrade={() => setView('PREMIUM')}
             setShowAuthModal={setShowAuthModal} // Pass to DuaResult
             user={user} // Pass to DuaResult
+            dailyAudioCount={dailyAudioCount} // Pass new prop
+            setDailyAudioCount={setDailyAudioCount} // Pass new prop
           />
         ) : (
           <div className="flex flex-col items-center w-full">
             {/* Limit Badge */}
             {!isPremium && (
               <div className="mb-6 px-4 py-1 bg-slate-200/50 backdrop-blur-sm rounded-full border border-slate-300/50 text-xs font-semibold text-slate-500 flex items-center gap-2">
-                <span>Daily Limit: {dailyCount}/{FREE_DAILY_LIMIT}</span>
+                <span>Daily Limit: {dailyCount}/{FREE_DAILY_LIMIT} Duas</span>
                 {dailyCount >= FREE_DAILY_LIMIT && <Lock size={12} />}
               </div>
             )}
@@ -210,7 +224,7 @@ const App: React.FC = () => {
         {/* Auth Modal */}
         {showAuthModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-in fade-in">
-            <div className="relative w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
+            <div className="relative w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-100 overflow-y-auto max-h-[90vh]"> {/* Added overflow-y-auto and max-h */}
               <button 
                 onClick={() => setShowAuthModal(false)}
                 className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
