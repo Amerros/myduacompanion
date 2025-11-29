@@ -17,7 +17,7 @@
     radial-gradient(circle at 75% 25%, hsla(300, 80%, 95%, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 25% 75%, hsla(100, 80%, 95%, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, hsla(50, 80%, 95%, 0.1) 0%, transparent 50%);
-  background-size: 200% 200%; /* Make gradients very large */
+  background-size: 400% 400%; /* Increased size to prevent visible seams */
   background-repeat: no-repeat;
   animation: subtlePan 30s ease infinite alternate; /* Subtle panning animation */
 }
