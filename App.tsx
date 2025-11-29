@@ -18,6 +18,7 @@ import {
   saveDuaToHistory, 
   FREE_DAILY_LIMIT 
 } from './services/userService';
+import { showError } from './utils/toast'; // Import showError
 
 const App: React.FC = () => {
   const [dua, setDua] = useState<DuaResponse | null>(null);
@@ -65,6 +66,8 @@ const App: React.FC = () => {
       // Auto-save if premium (or simple save for now to history)
       saveDuaToHistory(result);
       setSavedDuas(getSavedDuas());
+    } else {
+      showError("Failed to generate Dua. Please check your API key and try again."); // Show error toast
     }
     setLoading(false);
   };
