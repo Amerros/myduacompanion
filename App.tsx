@@ -1,26 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Moon, Wind, Stars, Lock } from 'lucide-react';
+import { Sparkles, Moon, Wind, Stars, Lock, Loader2 } from 'lucide-react';
 import DuaInput from './components/DuaInput';
 import DuaResult from './components/DuaResult';
 import Navigation from './components/Navigation';
 import PremiumPage from './components/PremiumPage';
 import Dashboard from './components/Dashboard';
-import Login from './pages/Login'; // Import the Login page
-import { useSession } from './contexts/SessionContext'; // Import useSession hook
+import Login from './src/pages/Login'; // Corrected import path
+import { useSession } from './src/contexts/SessionContext'; // Corrected import path
 
 import { DuaResponse, ViewState } from './types';
 import { generateDua } from './services/geminiService';
 import { 
   getDailyUsage, 
   incrementDailyUsage, 
-  isPremiumUser, 
+  getPremiumStatus, // Updated import
+  setPremiumStatus, // New import
   getSavedDuas, 
   saveDuaToHistory, 
   FREE_DAILY_LIMIT 
 } from './services/userService';
 
 const App: React.FC = () => {
-  const { session, isLoading: isSessionLoading } = useSession(); // Use the session context
+  const { session, user, isLoading: isSessionLoading } = useSession(); // Use the session context and user
   const [dua, setDua] = useState<DuaResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<ViewState>('HOME');
@@ -32,14 +33,30 @@ const App: React.FC = () => {
   const [savedDuas, setSavedDuas] = useState<DuaResponse[]>([]);
 
   useEffect(() => {
-    // Initialize user state on mount
-    // This will be updated to fetch from Supabase in the next step
-    setDailyCount(getDailyUsage()); 
-    setIsPremium(isPremiumUser()); 
-    setSavedDuas(getSavedDuas());
-  }, [view, session]); // Refresh when view or session changes
+    const initializeUserData = async () => {
+      if (user) {
+        setDailyCount(getDailyUsage()); 
+        const premium = await getPremiumStatus(user.id);
+        setIsPremium(premium);
+        const saved = await getSavedDuas(user.id);
+        setSavedDuas(saved);
+      } else {
+        // Reset state if no user is logged in
+        setDailyCount(0);
+        setIsPremium(false);
+        setSavedDuas([]);
+      }
+    };
+    initializeUserData();
+  }, [user, view]); // Refresh when user or view changes
 
   const handleRequest = async (query: string) => {
+    if (!user) {
+      alert("Please log in to generate Duas.");
+      setView('HOME'); // Or redirect to login
+      return;
+    }
+
     // Rate Limit Check
     if (!isPremium && dailyCount >= FREE_DAILY_LIMIT) {
       alert("You have reached your free daily limit. Please upgrade for unlimited Duas.");
@@ -65,8 +82,8 @@ const App: React.FC = () => {
       }
       
       // Auto-save if premium (or simple save for now to history)
-      saveDuaToHistory(result);
-      setSavedDuas(getSavedDuas());
+      await saveDuaToHistory(result, user.id);
+      setSavedDuas(await getSavedDuas(user.id)); // Re-fetch saved duas
     }
     setLoading(false);
   };
@@ -81,6 +98,14 @@ const App: React.FC = () => {
     setView(newView);
     if (newView !== 'HOME') {
       setResultMode(false);
+    }
+  };
+
+  const handleUpgradeSuccess = async () => {
+    if (user) {
+      await setPremiumStatus(user.id, true);
+      setIsPremium(true);
+      setView('HOME');
     }
   };
 
@@ -99,7 +124,7 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (view) {
       case 'PREMIUM':
-        return <PremiumPage onUpgrade={() => { setIsPremium(true); setView('HOME'); }} />;
+        return <PremiumPage onUpgrade={handleUpgradeSuccess} />;
       case 'DASHBOARD':
         return (
           <Dashboard 

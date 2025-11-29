@@ -1,8 +1,8 @@
 import { DuaResponse } from "../types";
+import { supabase } from '../src/integrations/supabase/client'; // Corrected import path
 
 const KEY_USAGE = 'dua_ai_usage';
-const KEY_PREMIUM = 'dua_ai_premium';
-const KEY_SAVED = 'dua_ai_saved';
+// KEY_PREMIUM and KEY_SAVED are no longer needed for localStorage
 
 export const FREE_DAILY_LIMIT = 3;
 
@@ -25,30 +25,87 @@ export const incrementDailyUsage = () => {
   localStorage.setItem(KEY_USAGE, JSON.stringify({ date: today, count: current + 1 }));
 };
 
-export const isPremiumUser = (): boolean => {
-  return localStorage.getItem(KEY_PREMIUM) === 'true';
+export const getPremiumStatus = async (userId: string): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('premium_status')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching premium status:", error);
+    return false;
+  }
+  return data?.premium_status || false;
 };
 
-export const setPremiumUser = (status: boolean) => {
-  localStorage.setItem(KEY_PREMIUM, String(status));
-  // Force reload to update UI state across components if needed, 
-  // though React state in App.tsx is better.
+export const setPremiumStatus = async (userId: string, status: boolean): Promise<void> => {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ premium_status: status, updated_at: new Date().toISOString() })
+    .eq('id', userId);
+
+  if (error) {
+    console.error("Error updating premium status:", error);
+  }
 };
 
-export const saveDuaToHistory = (dua: DuaResponse) => {
-    const saved = getSavedDuas();
-    // Prevent duplicates based on arabic text
-    if (!saved.some(d => d.arabic === dua.arabic)) {
-        const newDua = { ...dua, timestamp: Date.now() };
-        saved.unshift(newDua);
-        localStorage.setItem(KEY_SAVED, JSON.stringify(saved));
+export const saveDuaToHistory = async (dua: DuaResponse, userId: string) => {
+    // Check for duplicates before inserting
+    const { data: existingDuas, error: fetchError } = await supabase
+        .from('saved_duas')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('arabic', dua.arabic); // Assuming arabic text is unique enough for a user
+
+    if (fetchError) {
+        console.error("Error checking for existing dua:", fetchError);
+        return;
     }
-}
 
-export const getSavedDuas = (): DuaResponse[] => {
-    return JSON.parse(localStorage.getItem(KEY_SAVED) || '[]');
-}
+    if (existingDuas && existingDuas.length > 0) {
+        console.log("Dua already saved for this user.");
+        return; // Don't save duplicates
+    }
 
-export const clearHistory = () => {
-    localStorage.removeItem(KEY_SAVED);
-}
+    const { error: insertError } = await supabase
+        .from('saved_duas')
+        .insert({
+            user_id: userId,
+            arabic: dua.arabic,
+            transliteration: dua.transliteration,
+            translation: dua.translation,
+            source: dua.source,
+            guidance: dua.guidance,
+            timestamp: new Date().toISOString()
+        });
+
+    if (insertError) {
+        console.error("Error saving dua to history:", insertError);
+    }
+};
+
+export const getSavedDuas = async (userId: string): Promise<DuaResponse[]> => {
+    const { data, error } = await supabase
+        .from('saved_duas')
+        .select('*')
+        .eq('user_id', userId)
+        .order('timestamp', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching saved duas:", error);
+        return [];
+    }
+    return data || [];
+};
+
+export const clearHistory = async (userId: string): Promise<void> => {
+    const { error } = await supabase
+        .from('saved_duas')
+        .delete()
+        .eq('user_id', userId);
+
+    if (error) {
+        console.error("Error clearing history:", error);
+    }
+};

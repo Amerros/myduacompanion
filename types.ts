@@ -5,6 +5,7 @@ export interface DuaResponse {
   source: string; // e.g., "Surah Al-Baqarah 2:286" or "Inspirational"
   guidance: string; // Comforting explanation
   timestamp?: number;
+  user_id?: string; // Added for Supabase integration
 }
 
 export interface MoodPreset {

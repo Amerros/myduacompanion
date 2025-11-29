@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check, Star, Lock, Zap, Music, CreditCard } from 'lucide-react';
-import { setPremiumUser } from '../services/userService';
+import { setPremiumStatus } from '../services/userService'; // Corrected import
 
 interface PremiumPageProps {
   onUpgrade: () => void;
@@ -15,8 +15,13 @@ const PremiumPage: React.FC<PremiumPageProps> = ({ onUpgrade }) => {
     // In a real app, this would listen for a success URL or server-side event
     setTimeout(() => {
       if (confirm(`Did you complete the ${planType} payment on PayPal? Click OK to activate your Premium status.`)) {
-        setPremiumUser(true);
-        onUpgrade();
+        // This needs to be updated to use the user ID from the session
+        // For now, it's a placeholder as the user ID isn't directly available here
+        // A more robust solution would involve a server-side webhook from PayPal
+        // or passing the user ID from App.tsx
+        console.warn("Premium status update in PremiumPage.tsx needs user ID. Simulating for now.");
+        // setPremiumStatus(userId, true); // This would be the correct call
+        onUpgrade(); // Call onUpgrade to update App.tsx state
       }
     }, 2000);
   };
@@ -29,7 +34,7 @@ const PremiumPage: React.FC<PremiumPageProps> = ({ onUpgrade }) => {
           <span>Unlock Your Spiritual Potential</span>
         </div>
         <h1 className="font-serif-display text-4xl md:text-5xl text-slate-800 mb-4">
-          Upgrade to DuaAI Premium
+          Upgrade to My Dua Companion Premium
         </h1>
         <p className="text-slate-600 text-lg max-w-2xl mx-auto">
           Support our mission and gain unlimited access to personalized supplications, audio recitations, and more.
