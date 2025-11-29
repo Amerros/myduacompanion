@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { SessionContextProvider } from './src/contexts/SessionContext'; // Corrected import path
+import './src/index.css'; // Import the main CSS file
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
