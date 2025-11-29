@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Moon, Wind, Stars, Loader2, X } from 'lucide-react'; // Removed Lock
+import { Sparkles, Moon, Wind, Stars, Loader2, X } from 'lucide-react';
 import DuaInput from './components/DuaInput';
 import DuaResult from './components/DuaResult';
 import Navigation from './components/Navigation';
-import DonatePage from './components/DonatePage'; // Changed from PremiumPage
+import ContributePage from './components/ContributePage'; // Changed from DonatePage
 import Dashboard from './components/Dashboard';
 import Login from './src/pages/Login';
 import { useSession } from './src/contexts/SessionContext';
@@ -13,7 +13,6 @@ import { generateDua } from './services/geminiService';
 import { 
   getSavedDuas, 
   saveDuaToHistory, 
-  // Removed FREE_DAILY_LIMIT, FREE_AUDIO_LIMIT, getDailyUsage, incrementDailyUsage, getDailyAudioUsage, incrementDailyAudioUsage, getPremiumStatus, setPremiumStatus
 } from './services/userService';
 
 const App: React.FC = () => {
@@ -24,18 +23,14 @@ const App: React.FC = () => {
   const [resultMode, setResultMode] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   
-  // Removed dailyCount, dailyAudioCount, isPremium states
   const [savedDuas, setSavedDuas] = useState<DuaResponse[]>([]);
 
   useEffect(() => {
     const initializeUserData = async () => {
-      // Removed dailyCount and dailyAudioCount initialization
       if (user) {
-        // Removed premium status fetching
         const saved = await getSavedDuas(user.id);
         setSavedDuas(saved);
       } else {
-        // Reset Supabase-dependent state if no user is logged in
         setSavedDuas([]);
       }
     };
@@ -59,9 +54,6 @@ const App: React.FC = () => {
       setDua(result);
       setResultMode(true);
       
-      // All duas are now free, no incrementDailyUsage needed
-      
-      // Save Dua to history ONLY if user is logged in
       if (user) {
         await saveDuaToHistory(result, user.id);
         setSavedDuas(await getSavedDuas(user.id));
@@ -82,8 +74,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Removed handleUpgradeSuccess
-
   if (isSessionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -94,8 +84,8 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     switch (view) {
-      case 'DONATE': // New case for DonatePage
-        return <DonatePage />;
+      case 'CONTRIBUTE': // Changed from 'DONATE'
+        return <ContributePage />;
       case 'DASHBOARD':
         return (
           <Dashboard 
@@ -118,17 +108,13 @@ const App: React.FC = () => {
           <DuaResult 
             dua={dua} 
             onBack={handleReset} 
-            // Removed isPremium, onUpgrade, setShowAuthModal, user, dailyAudioCount, setDailyAudioCount
           />
         ) : (
           <div className="flex flex-col items-center w-full">
-            {/* Removed Limit Badge */}
-            
             <DuaInput onSubmit={handleRequest} />
             
-            {/* Removed Upgrade CTA */}
             <button 
-                onClick={() => setView('DONATE')}
+                onClick={() => setView('CONTRIBUTE')} // Changed to 'CONTRIBUTE'
                 className="mt-8 px-6 py-2 bg-gradient-to-r from-emerald-100 to-teal-100 hover:from-emerald-200 hover:to-teal-200 text-emerald-800 rounded-full text-sm font-semibold transition-all shadow-sm flex items-center gap-2"
               >
                 <Sparkles size={14} /> 
@@ -142,18 +128,13 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen relative overflow-x-hidden bg-white text-slate-800 font-sans selection:bg-amber-100 selection:text-amber-900 transition-colors duration-1000">
       
-      {/* Heavenly Background Elements */}
       <div className="absolute inset-0 z-0 pointer-events-none fixed">
-        {/* Main heavenly glow */}
         <div className="absolute inset-0 heavenly-glow-bg"></div>
-        {/* Noise overlay */}
         <div className="absolute inset-0 opacity-[0.03] noise-bg"></div>
       </div>
 
-      {/* Main Content Container */}
       <div className="relative z-10 flex flex-col min-h-screen items-center p-4 md:p-8">
         
-        {/* Header */}
         <header className="w-full p-4 md:p-6 flex justify-between items-center opacity-80 pointer-events-none sticky top-0 z-40">
           <div 
             onClick={() => setView('HOME')}
@@ -164,15 +145,12 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        {/* Dynamic Content Area */}
         <main className="w-full flex-grow flex flex-col items-center justify-center pt-4 md:pt-10">
           {renderContent()}
         </main>
         
-        {/* Navigation Bar */}
         <Navigation currentView={view} setView={handleNavChange} />
         
-        {/* Auth Modal */}
         {showAuthModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-in fade-in">
             <div className="relative w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-100 overflow-y-auto max-h-[90vh]">

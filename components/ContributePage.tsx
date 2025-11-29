@@ -1,7 +1,7 @@
 import React from 'react';
 import { Heart, Handshake, Globe, DollarSign } from 'lucide-react';
 
-const DonatePage: React.FC = () => {
+const ContributePage: React.FC = () => {
   const paypalLink = "https://paypal.me/drowsymasks/5"; // Example link, user should replace with their own
 
   return (
@@ -35,7 +35,7 @@ const DonatePage: React.FC = () => {
           className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#0070BA] text-white font-bold rounded-xl hover:bg-[#005ea6] transition-all shadow-lg text-xl group"
         >
           <DollarSign size={24} className="group-hover:scale-110 transition-transform" />
-          <span>Donate via PayPal</span>
+          <span>Contribute via PayPal</span>
         </a>
         <p className="text-slate-500 text-sm mt-4">Clicking this button will open PayPal.me in a new tab.</p>
       </div>
@@ -47,4 +47,4 @@ const DonatePage: React.FC = () => {
   );
 };
 
-export default DonatePage;
+export default ContributePage;

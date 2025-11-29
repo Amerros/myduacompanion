@@ -1,18 +1,17 @@
 import React from 'react';
 import { ViewState } from '../types';
-import { Moon, Heart, LayoutDashboard, Gift } from 'lucide-react'; // Changed Star to Gift
+import { Moon, Heart, LayoutDashboard, Gift } from 'lucide-react';
 
 interface NavigationProps {
   currentView: ViewState;
   setView: (view: ViewState) => void;
-  // isPremium prop is no longer needed
 }
 
 const Navigation: React.FC<NavigationProps> = ({ currentView, setView }) => {
   const navItems: { view: ViewState; label: string; icon: React.ReactNode }[] = [
     { view: 'HOME', label: 'Home', icon: <Moon size={18} /> },
     { view: 'DASHBOARD', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { view: 'DONATE', label: 'Donate', icon: <Gift size={18} /> }, // Added Donate item
+    { view: 'CONTRIBUTE', label: 'Contribute', icon: <Gift size={18} /> }, // Changed to Contribute
   ];
 
   return (
