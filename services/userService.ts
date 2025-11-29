@@ -1,5 +1,5 @@
 import { DuaResponse } from "../types";
-import { supabase } from '../src/integrations/supabase/client'; // Corrected import path
+import { supabase } from '@/src/integrations/supabase/client'; // Corrected import path
 
 const KEY_USAGE = 'dua_ai_usage';
 const KEY_AUDIO_USAGE = 'dua_ai_audio_usage'; // New key for audio usage
