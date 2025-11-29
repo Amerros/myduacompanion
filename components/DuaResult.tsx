@@ -1,25 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { DuaResponse } from '../types';
-import { ArrowLeft, Copy, Share2, Feather, Play, Pause, Lock, Loader2, Volume2 } from 'lucide-react';
+import { ArrowLeft, Copy, Share2, Feather, Play, Pause, Loader2, Volume2 } from 'lucide-react'; // Removed Lock
 import { generateDuaAudio, decodeAudioData } from '../services/geminiService';
-import { User } from '@supabase/supabase-js'; // Import User type
-import { incrementDailyAudioUsage, FREE_AUDIO_LIMIT } from '../services/userService'; // New imports
+// Removed User import and userService imports related to audio limits
 
 interface DuaResultProps {
   dua: DuaResponse;
   onBack: () => void;
-  isPremium: boolean;
-  onUpgrade: () => void;
-  setShowAuthModal: (show: boolean) => void; // New prop
-  user: User | null; // New prop
-  dailyAudioCount: number; // New prop
-  setDailyAudioCount: (count: number) => void; // New prop
+  // Removed isPremium, onUpgrade, setShowAuthModal, user, dailyAudioCount, setDailyAudioCount
 }
 
-const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade, setShowAuthModal, user, dailyAudioCount, setDailyAudioCount }) => {
+const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
-  const [progress, setProgress] = useState(0); // New state for progress bar
+  const [progress, setProgress] = useState(0);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
 
@@ -28,12 +22,12 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
     return () => {
       if (sourceRef.current) {
         sourceRef.current.stop();
-        sourceRef.current.disconnect(); // Explicitly disconnect the source
-        sourceRef.current = null; // Clear the source reference
+        sourceRef.current.disconnect();
+        sourceRef.current = null;
       }
       if (audioContextRef.current) {
         audioContextRef.current.close();
-        audioContextRef.current = null; // Clear the AudioContext reference
+        audioContextRef.current = null;
       }
     };
   }, []);
@@ -44,37 +38,24 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
       setProgress(0);
       interval = setInterval(() => {
         setProgress((prev) => {
-          if (prev < 95) { // Stop just before 100 to indicate it's still processing
-            return prev + 5; // Increment every 1.25 seconds for a 25-second total fill
+          if (prev < 95) {
+            return prev + 5;
           }
           return prev;
         });
-      }, 1250); // 25 seconds / 20 increments = 1.25 seconds per increment
+      }, 1250);
     } else {
       clearInterval(interval!);
-      setProgress(0); // Reset progress when not loading
+      setProgress(0);
     }
     return () => clearInterval(interval);
   }, [isLoadingAudio]);
 
   const handlePlayAudio = async () => {
-    // Check free audio limit for unauthenticated users
-    if (!user && dailyAudioCount >= FREE_AUDIO_LIMIT) {
-      setShowAuthModal(true);
-      alert("You have reached your free daily limit for audio recitations. Please log in or upgrade for unlimited audio.");
-      return;
-    }
-
-    // Check premium status for authenticated users
-    if (user && !isPremium) {
-      onUpgrade(); // This will navigate to the premium page
-      return;
-    }
-
     if (isPlaying) {
       if (sourceRef.current) {
         sourceRef.current.stop();
-        sourceRef.current.disconnect(); // Disconnect when stopping manually
+        sourceRef.current.disconnect();
         sourceRef.current = null;
       }
       setIsPlaying(false);
@@ -92,7 +73,6 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
           });
         }
         
-        // Resume context if suspended (browser policy)
         if (audioContextRef.current.state === 'suspended') {
           await audioContextRef.current.resume();
         }
@@ -105,22 +85,18 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
         source.connect(ctx.destination);
         source.onended = () => {
           setIsPlaying(false);
-          sourceRef.current = null; // Clear the ref when audio ends naturally
+          sourceRef.current = null;
         };
         
         source.start(0);
         sourceRef.current = source;
         setIsPlaying(true);
 
-        // Increment audio usage for free users
-        if (!user || (user && !isPremium)) { // If unauthenticated OR authenticated but not premium
-          incrementDailyAudioUsage();
-          setDailyAudioCount(prev => prev + 1);
-        }
+        // Removed increment audio usage logic
       } else {
         alert("Unable to generate audio at this time. Please try again.");
       }
-    } catch (error: any) { // Catch specific timeout error
+    } catch (error: any) {
       console.error("Playback failed:", error);
       if (error.message && error.message.includes('timed out')) {
         alert("Audio generation took too long. Please try again in a moment.");
@@ -164,22 +140,15 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
                disabled={isLoadingAudio}
                className={`
                  flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all
-                 ${(user && isPremium) || (!user && dailyAudioCount < FREE_AUDIO_LIMIT)
-                    ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' 
-                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}
+                 bg-amber-100 text-amber-800 hover:bg-amber-200
                  ${isLoadingAudio ? 'opacity-70 cursor-wait' : ''}
                `}
-               title={((user && isPremium) || (!user && dailyAudioCount < FREE_AUDIO_LIMIT)) ? "Play Recitation" : "Upgrade to Listen"}
+               title="Play Recitation"
              >
                {isLoadingAudio ? (
                  <>
                    <Loader2 className="w-4 h-4 animate-spin" />
                    <span>Generating...</span>
-                 </>
-               ) : (!user && dailyAudioCount >= FREE_AUDIO_LIMIT) || (user && !isPremium) ? (
-                 <>
-                   <Lock className="w-3 h-3" />
-                   <span>Listen</span>
                  </>
                ) : isPlaying ? (
                  <>

@@ -1,26 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Moon, Wind, Stars, Lock, Loader2, X } from 'lucide-react';
+import { Sparkles, Moon, Wind, Stars, Loader2, X } from 'lucide-react'; // Removed Lock
 import DuaInput from './components/DuaInput';
 import DuaResult from './components/DuaResult';
 import Navigation from './components/Navigation';
-import PremiumPage from './components/PremiumPage';
+import DonatePage from './components/DonatePage'; // Changed from PremiumPage
 import Dashboard from './components/Dashboard';
-import Login from './src/pages/Login'; // Import the Login page
-import { useSession } from './src/contexts/SessionContext'; // Import useSession hook
+import Login from './src/pages/Login';
+import { useSession } from './src/contexts/SessionContext';
 
 import { DuaResponse, ViewState } from './types';
 import { generateDua } from './services/geminiService';
 import { 
-  getDailyUsage, 
-  incrementDailyUsage, 
-  getDailyAudioUsage, // New import
-  incrementDailyAudioUsage, // New import
-  getPremiumStatus, 
-  setPremiumStatus, 
   getSavedDuas, 
   saveDuaToHistory, 
-  FREE_DAILY_LIMIT,
-  FREE_AUDIO_LIMIT // New import
+  // Removed FREE_DAILY_LIMIT, FREE_AUDIO_LIMIT, getDailyUsage, incrementDailyUsage, getDailyAudioUsage, incrementDailyAudioUsage, getPremiumStatus, setPremiumStatus
 } from './services/userService';
 
 const App: React.FC = () => {
@@ -28,35 +21,27 @@ const App: React.FC = () => {
   const [dua, setDua] = useState<DuaResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<ViewState>('HOME');
-  const [resultMode, setResultMode] = useState(false); // Sub-state for HOME view
-  const [showAuthModal, setShowAuthModal] = useState(false); // New state for auth modal
+  const [resultMode, setResultMode] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   
-  // User State
-  const [dailyCount, setDailyCount] = useState(0);
-  const [dailyAudioCount, setDailyAudioCount] = useState(0); // New state for audio usage
-  const [isPremium, setIsPremium] = useState(false);
+  // Removed dailyCount, dailyAudioCount, isPremium states
   const [savedDuas, setSavedDuas] = useState<DuaResponse[]>([]);
 
   useEffect(() => {
     const initializeUserData = async () => {
-      setDailyCount(getDailyUsage()); 
-      setDailyAudioCount(getDailyAudioUsage()); // Initialize audio count
-
+      // Removed dailyCount and dailyAudioCount initialization
       if (user) {
-        const premium = await getPremiumStatus(user.id);
-        setIsPremium(premium);
+        // Removed premium status fetching
         const saved = await getSavedDuas(user.id);
         setSavedDuas(saved);
       } else {
         // Reset Supabase-dependent state if no user is logged in
-        setIsPremium(false);
         setSavedDuas([]);
       }
     };
     initializeUserData();
   }, [user, view]);
 
-  // Effect to close the auth modal when the user logs in
   useEffect(() => {
     if (user && showAuthModal) {
       setShowAuthModal(false);
@@ -64,20 +49,6 @@ const App: React.FC = () => {
   }, [user, showAuthModal]);
 
   const handleRequest = async (query: string) => {
-    // Check free limit for unauthenticated users
-    if (!user && dailyCount >= FREE_DAILY_LIMIT) {
-      setShowAuthModal(true);
-      alert("You have reached your free daily limit for Duas. Please log in or upgrade for unlimited Duas.");
-      return;
-    }
-
-    // Check premium status for authenticated users
-    if (user && !isPremium && dailyCount >= FREE_DAILY_LIMIT) {
-      alert("You have reached your free daily limit for Duas. Please upgrade for unlimited Duas.");
-      setView('PREMIUM');
-      return;
-    }
-
     setLoading(true);
     const [result] = await Promise.all([
       generateDua(query),
@@ -88,13 +59,9 @@ const App: React.FC = () => {
       setDua(result);
       setResultMode(true);
       
-      // Increment usage for free users or non-premium authenticated users
-      if (!isPremium) {
-        incrementDailyUsage();
-        setDailyCount(prev => prev + 1);
-      }
+      // All duas are now free, no incrementDailyUsage needed
       
-      // Save Dua to history ONLY if user is logged in (saving is a premium feature)
+      // Save Dua to history ONLY if user is logged in
       if (user) {
         await saveDuaToHistory(result, user.id);
         setSavedDuas(await getSavedDuas(user.id));
@@ -115,14 +82,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleUpgradeSuccess = async () => {
-    if (user) {
-      await setPremiumStatus(user.id, true);
-      setIsPremium(true);
-      setView('HOME');
-      setShowAuthModal(false); // Close modal if open
-    }
-  };
+  // Removed handleUpgradeSuccess
 
   if (isSessionLoading) {
     return (
@@ -134,17 +94,14 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     switch (view) {
-      case 'PREMIUM':
-        return <PremiumPage onUpgrade={handleUpgradeSuccess} user={user} setShowAuthModal={setShowAuthModal} />;
+      case 'DONATE': // New case for DonatePage
+        return <DonatePage />;
       case 'DASHBOARD':
         return (
           <Dashboard 
-            dailyUsage={dailyCount} 
-            isPremium={isPremium} 
             savedDuas={savedDuas}
-            onUpgrade={() => setView('PREMIUM')}
             onViewDua={(d) => { setDua(d); setResultMode(true); setView('HOME'); }}
-            user={user} // Pass user to Dashboard
+            user={user}
           />
         );
       case 'HOME':
@@ -161,35 +118,22 @@ const App: React.FC = () => {
           <DuaResult 
             dua={dua} 
             onBack={handleReset} 
-            isPremium={isPremium}
-            onUpgrade={() => setView('PREMIUM')}
-            setShowAuthModal={setShowAuthModal} // Pass to DuaResult
-            user={user} // Pass to DuaResult
-            dailyAudioCount={dailyAudioCount} // Pass new prop
-            setDailyAudioCount={setDailyAudioCount} // Pass new prop
+            // Removed isPremium, onUpgrade, setShowAuthModal, user, dailyAudioCount, setDailyAudioCount
           />
         ) : (
           <div className="flex flex-col items-center w-full">
-            {/* Limit Badge */}
-            {!isPremium && (
-              <div className="mb-6 px-4 py-1 bg-slate-200/50 backdrop-blur-sm rounded-full border border-slate-300/50 text-xs font-semibold text-slate-500 flex items-center gap-2">
-                <span>Daily Limit: {dailyCount}/{FREE_DAILY_LIMIT} Duas</span>
-                {dailyCount >= FREE_DAILY_LIMIT && <Lock size={12} />}
-              </div>
-            )}
+            {/* Removed Limit Badge */}
             
             <DuaInput onSubmit={handleRequest} />
             
-            {/* Upgrade CTA */}
-            {!isPremium && (
-              <button 
-                onClick={() => setView('PREMIUM')}
-                className="mt-8 px-6 py-2 bg-gradient-to-r from-amber-100 to-orange-100 hover:from-amber-200 hover:to-orange-200 text-amber-800 rounded-full text-sm font-semibold transition-all shadow-sm flex items-center gap-2"
+            {/* Removed Upgrade CTA */}
+            <button 
+                onClick={() => setView('DONATE')}
+                className="mt-8 px-6 py-2 bg-gradient-to-r from-emerald-100 to-teal-100 hover:from-emerald-200 hover:to-teal-200 text-emerald-800 rounded-full text-sm font-semibold transition-all shadow-sm flex items-center gap-2"
               >
                 <Sparkles size={14} /> 
-                Get Unlimited Duas & Audio
+                Support Our Mission
               </button>
-            )}
           </div>
         );
     }
@@ -226,12 +170,12 @@ const App: React.FC = () => {
         </main>
         
         {/* Navigation Bar */}
-        <Navigation currentView={view} setView={handleNavChange} isPremium={isPremium} />
+        <Navigation currentView={view} setView={handleNavChange} />
         
         {/* Auth Modal */}
         {showAuthModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-in fade-in">
-            <div className="relative w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-100 overflow-y-auto max-h-[90vh]"> {/* Added overflow-y-auto and max-h */}
+            <div className="relative w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-100 overflow-y-auto max-h-[90vh]">
               <button 
                 onClick={() => setShowAuthModal(false)}
                 className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"

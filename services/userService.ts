@@ -1,74 +1,10 @@
 import { DuaResponse } from "../types";
-import { supabase } from '@/src/integrations/supabase/client'; // Corrected import path
+import { supabase } from '@/src/integrations/supabase/client';
 
-const KEY_USAGE = 'dua_ai_usage';
-const KEY_AUDIO_USAGE = 'dua_ai_audio_usage'; // New key for audio usage
+// Removed FREE_DAILY_LIMIT and FREE_AUDIO_LIMIT
+// Removed getDailyUsage, incrementDailyUsage, getDailyAudioUsage, incrementDailyAudioUsage
 
-export const FREE_DAILY_LIMIT = 3;
-export const FREE_AUDIO_LIMIT = 1; // New limit for free audio plays
-
-export const getDailyUsage = (): number => {
-  const stored = localStorage.getItem(KEY_USAGE);
-  const today = new Date().toDateString();
-  
-  if (stored) {
-    const parsed = JSON.parse(stored);
-    if (parsed.date === today) {
-      return parsed.count;
-    }
-  }
-  return 0;
-};
-
-export const incrementDailyUsage = () => {
-  const current = getDailyUsage();
-  const today = new Date().toDateString();
-  localStorage.setItem(KEY_USAGE, JSON.stringify({ date: today, count: current + 1 }));
-};
-
-export const getDailyAudioUsage = (): number => {
-  const stored = localStorage.getItem(KEY_AUDIO_USAGE);
-  const today = new Date().toDateString();
-  
-  if (stored) {
-    const parsed = JSON.parse(stored);
-    if (parsed.date === today) {
-      return parsed.count;
-    }
-  }
-  return 0;
-};
-
-export const incrementDailyAudioUsage = () => {
-  const current = getDailyAudioUsage();
-  const today = new Date().toDateString();
-  localStorage.setItem(KEY_AUDIO_USAGE, JSON.stringify({ date: today, count: current + 1 }));
-};
-
-export const getPremiumStatus = async (userId: string): Promise<boolean> => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('premium_status')
-    .eq('id', userId)
-    .single();
-
-  if (error) {
-    console.error("Error fetching premium status:", error);
-    return false;
-  }
-  return data?.premium_status || false;
-};
-
-export const setPremiumStatus = async (userId: string, status: boolean): Promise<void> => {
-  const { error } = await supabase
-    .from('profiles')
-    .update({ premium_status: status, updated_at: new Date().toISOString() })
-    .eq('id', userId);
-
-  if (error) {
-    console.error("Error updating premium status:", error);
-  }
-};
+// Removed getPremiumStatus and setPremiumStatus
 
 export const saveDuaToHistory = async (dua: DuaResponse, userId: string) => {
     // Check for duplicates before inserting
