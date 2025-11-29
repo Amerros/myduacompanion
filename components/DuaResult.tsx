@@ -27,9 +27,12 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
     return () => {
       if (sourceRef.current) {
         sourceRef.current.stop();
+        sourceRef.current.disconnect(); // Explicitly disconnect the source
+        sourceRef.current = null; // Clear the source reference
       }
       if (audioContextRef.current) {
         audioContextRef.current.close();
+        audioContextRef.current = null; // Clear the AudioContext reference
       }
     };
   }, []);
@@ -51,6 +54,7 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
     if (isPlaying) {
       if (sourceRef.current) {
         sourceRef.current.stop();
+        sourceRef.current.disconnect(); // Disconnect when stopping manually
         sourceRef.current = null;
       }
       setIsPlaying(false);
@@ -79,7 +83,10 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, isPremium, onUpgrade
         const source = ctx.createBufferSource();
         source.buffer = buffer;
         source.connect(ctx.destination);
-        source.onended = () => setIsPlaying(false);
+        source.onended = () => {
+          setIsPlaying(false);
+          sourceRef.current = null; // Clear the ref when audio ends naturally
+        };
         
         source.start(0);
         sourceRef.current = source;
