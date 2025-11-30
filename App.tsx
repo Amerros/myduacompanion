@@ -3,7 +3,7 @@ import { Sparkles, Moon, Wind, Stars, Loader2, X } from 'lucide-react';
 import DuaInput from './components/DuaInput';
 import DuaResult from './components/DuaResult';
 import Navigation from './components/Navigation';
-import ContributePage from './components/ContributePage'; // Changed from DonatePage
+import ContributePage from './components/ContributePage';
 import Dashboard from './components/Dashboard';
 import Login from './src/pages/Login';
 import { useSession } from './src/contexts/SessionContext';
@@ -31,7 +31,7 @@ const App: React.FC = () => {
         const saved = await getSavedDuas(user.id);
         setSavedDuas(saved);
       } else {
-        setSavedDuas([]);
+        setSavedDuas([]); // Clear saved duas if no user is logged in
       }
     };
     initializeUserData();
@@ -54,6 +54,7 @@ const App: React.FC = () => {
       setDua(result);
       setResultMode(true);
       
+      // Save Dua to history ONLY if user is logged in
       if (user) {
         await saveDuaToHistory(result, user.id);
         setSavedDuas(await getSavedDuas(user.id));
@@ -84,7 +85,7 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     switch (view) {
-      case 'CONTRIBUTE': // Changed from 'DONATE'
+      case 'CONTRIBUTE':
         return <ContributePage />;
       case 'DASHBOARD':
         return (
@@ -92,6 +93,7 @@ const App: React.FC = () => {
             savedDuas={savedDuas}
             onViewDua={(d) => { setDua(d); setResultMode(true); setView('HOME'); }}
             user={user}
+            // setShowAuthModal is no longer passed to Dashboard
           />
         );
       case 'HOME':
@@ -114,7 +116,7 @@ const App: React.FC = () => {
             <DuaInput onSubmit={handleRequest} />
             
             <button 
-                onClick={() => setView('CONTRIBUTE')} // Changed to 'CONTRIBUTE'
+                onClick={() => setView('CONTRIBUTE')}
                 className="mt-8 px-6 py-2 bg-gradient-to-r from-emerald-100 to-teal-100 hover:from-emerald-200 hover:to-teal-200 text-emerald-800 rounded-full text-sm font-semibold transition-all shadow-sm flex items-center gap-2"
               >
                 <Sparkles size={14} /> 
