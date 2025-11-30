@@ -1,21 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { DuaResponse } from '../types';
-import { ArrowLeft, Copy, Share2, Feather, Play, Pause, Loader2, Volume2 } from 'lucide-react'; // Removed Lock
-import { generateDuaAudio, decodeAudioData } from '../services/geminiService';
-// Removed User import and userService imports related to audio limits
+import { ArrowLeft, Copy, Share2, Feather, Play, Pause, Loader2, Volume2 } from 'lucide-react';
+import { generateDuaAudio, decodeAudioData, translateText } from '../services/geminiService'; // Import translateText
 
 interface DuaResultProps {
   dua: DuaResponse;
   onBack: () => void;
-  // Removed isPremium, onUpgrade, setShowAuthModal, user, dailyAudioCount, setDailyAudioCount
+  targetLanguage: string; // New prop for target language
 }
 
-const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack }) => {
+const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack, targetLanguage }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [progress, setProgress] = useState(0);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
+
+  // State for translated content
+  const [translatedTransliteration, setTranslatedTransliteration] = useState(dua.transliteration);
+  const [translatedTranslation, setTranslatedTranslation] = useState(dua.translation);
+  const [translatedGuidance, setTranslatedGuidance] = useState(dua.guidance);
 
   useEffect(() => {
     // Cleanup on unmount
@@ -50,6 +54,28 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack }) => {
     }
     return () => clearInterval(interval);
   }, [isLoadingAudio]);
+
+  // Effect to handle translation when dua or targetLanguage changes
+  useEffect(() => {
+    const performTranslation = async () => {
+      if (targetLanguage === 'en') {
+        setTranslatedTransliteration(dua.transliteration);
+        setTranslatedTranslation(dua.translation);
+        setTranslatedGuidance(dua.guidance);
+      } else {
+        // Only translate if the target language is not English
+        const translatedTranslit = await translateText(dua.transliteration, targetLanguage);
+        const translatedTrans = await translateText(dua.translation, targetLanguage);
+        const translatedGuide = await translateText(dua.guidance, targetLanguage);
+        
+        setTranslatedTransliteration(translatedTranslit);
+        setTranslatedTranslation(translatedTrans);
+        setTranslatedGuidance(translatedGuide);
+      }
+    };
+
+    performTranslation();
+  }, [dua, targetLanguage]); // Re-run when dua object or targetLanguage changes
 
   const handlePlayAudio = async () => {
     if (isPlaying) {
@@ -91,8 +117,6 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack }) => {
         source.start(0);
         sourceRef.current = source;
         setIsPlaying(true);
-
-        // Removed increment audio usage logic
       } else {
         alert("Unable to generate audio at this time. Please try again.");
       }
@@ -183,15 +207,15 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack }) => {
           <div className="space-y-8 text-center max-w-xl mx-auto">
             <div className="space-y-2">
               <h3 className="text-xs font-bold text-amber-500/80 uppercase tracking-widest">Transliteration</h3>
-              <p className="text-slate-500 italic font-serif-display text-lg">
-                "{dua.transliteration}"
+              <p className="text-slate-500 italic font-serif-display text-lg" dir={targetLanguage === 'ar' ? 'rtl' : 'ltr'}>
+                "{translatedTransliteration}"
               </p>
             </div>
 
             <div className="space-y-2">
               <h3 className="text-xs font-bold text-sky-500/80 uppercase tracking-widest">Translation</h3>
-              <p className="text-slate-700 font-medium text-lg md:text-xl leading-relaxed">
-                {dua.translation}
+              <p className="text-slate-700 font-medium text-lg md:text-xl leading-relaxed" dir={targetLanguage === 'ar' ? 'rtl' : 'ltr'}>
+                {translatedTranslation}
               </p>
             </div>
           </div>
@@ -205,8 +229,8 @@ const DuaResult: React.FC<DuaResultProps> = ({ dua, onBack }) => {
             </div>
             <div>
               <h4 className="font-serif-display font-semibold text-slate-800 text-lg mb-2">Wisdom & Comfort</h4>
-              <p className="text-slate-600 leading-relaxed font-light">
-                {dua.guidance}
+              <p className="text-slate-600 leading-relaxed font-light" dir={targetLanguage === 'ar' ? 'rtl' : 'ltr'}>
+                {translatedGuidance}
               </p>
             </div>
           </div>

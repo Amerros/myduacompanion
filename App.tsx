@@ -25,8 +25,14 @@ const App: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   
   const [savedDuas, setSavedDuas] = useState<DuaResponse[]>([]);
+  const [appLanguage, setAppLanguage] = useState<string>('en'); // State for app language
 
   useEffect(() => {
+    // Initialize app language from localStorage
+    if (typeof window !== 'undefined') {
+      setAppLanguage(localStorage.getItem('appLanguage') || 'en');
+    }
+
     const initializeUserData = async () => {
       if (user) {
         const saved = await getSavedDuas(user.id);
@@ -74,6 +80,10 @@ const App: React.FC = () => {
     if (newView !== 'HOME') {
       setResultMode(false);
     }
+    // Re-fetch language when navigating to ensure it's up-to-date
+    if (typeof window !== 'undefined') {
+      setAppLanguage(localStorage.getItem('appLanguage') || 'en');
+    }
   };
 
   if (isSessionLoading) {
@@ -112,6 +122,7 @@ const App: React.FC = () => {
           <DuaResult 
             dua={dua} 
             onBack={handleReset} 
+            targetLanguage={appLanguage} // Pass the selected language
           />
         ) : (
           <div className="flex flex-col items-center w-full">

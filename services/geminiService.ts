@@ -191,3 +191,20 @@ export const chatWithCoach = async (message: string, context: string): Promise<s
     return "I apologize, I am unable to connect at the moment.";
   }
 };
+
+export const translateText = async (text: string, targetLanguage: string): Promise<string> => {
+  if (!text || targetLanguage === 'en') { // No need to translate if text is empty or target is English
+    return text;
+  }
+  try {
+    const prompt = `Translate the following text into ${targetLanguage === 'ar' ? 'Arabic' : 'English'}: "${text}"`;
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+    return response.text || text; // Return original text if translation fails
+  } catch (error) {
+    console.error("Translation Error:", error);
+    return text; // Return original text on error
+  }
+};
