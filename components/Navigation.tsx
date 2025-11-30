@@ -1,6 +1,6 @@
 import React from 'react';
 import { ViewState } from '../types';
-import { Moon, Heart, LayoutDashboard, Gift } from 'lucide-react';
+import { Moon, Heart, LayoutDashboard, Gift, Settings } from 'lucide-react'; // Added Settings icon
 
 interface NavigationProps {
   currentView: ViewState;
@@ -11,7 +11,8 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView }) => {
   const navItems: { view: ViewState; label: string; icon: React.ReactNode }[] = [
     { view: 'HOME', label: 'Home', icon: <Moon size={18} /> },
     { view: 'DASHBOARD', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { view: 'CONTRIBUTE', label: 'Contribute', icon: <Gift size={18} /> }, // Changed to Contribute
+    { view: 'CONTRIBUTE', label: 'Contribute', icon: <Gift size={18} /> },
+    { view: 'SETTINGS', label: 'Settings', icon: <Settings size={18} /> }, // Added Settings item
   ];
 
   return (

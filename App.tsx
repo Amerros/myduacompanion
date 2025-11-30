@@ -5,6 +5,7 @@ import DuaResult from './components/DuaResult';
 import Navigation from './components/Navigation';
 import ContributePage from './components/ContributePage';
 import Dashboard from './components/Dashboard';
+import SettingsPage from './components/SettingsPage'; // Import SettingsPage
 import Login from './src/pages/Login';
 import { useSession } from './src/contexts/SessionContext';
 
@@ -93,9 +94,10 @@ const App: React.FC = () => {
             savedDuas={savedDuas}
             onViewDua={(d) => { setDua(d); setResultMode(true); setView('HOME'); }}
             user={user}
-            // setShowAuthModal is no longer passed to Dashboard
           />
         );
+      case 'SETTINGS': // New case for SettingsPage
+        return <SettingsPage />;
       case 'HOME':
       default:
         return loading ? (
